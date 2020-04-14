@@ -106,13 +106,13 @@ pub fn set_unit_destination() -> Box<dyn Schedulable> {
                 return;
             }
 
-            for (entity, unit_rect) in all_query.iter_entities(world) {
+            for unit_rect in all_query.iter(world) {
                 if unit_rect.0.contains(mouse_pos.global().to_point()) {
                     return
                 }
             }
 
-            for (entity, unit_rect) in query.iter_entities(world) {
+            for (entity, _) in query.iter_entities(world) {
                 cmd.add_component(entity, Destination(mouse_pos.global()));
                 cmd.remove_tag::<Selected>(entity);
             }

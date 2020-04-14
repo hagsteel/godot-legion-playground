@@ -154,7 +154,8 @@ impl GameWorld {
             .resources
             .get_mut::<MousePos>()
             .map(|mut mouse| {
-                mouse.set_global(unsafe { owner.get_global_mouse_position() });
+                let pos = unsafe { owner.get_global_mouse_position() };
+                mouse.set_global(pos);
             });
 
         // Mouse button event
@@ -162,9 +163,7 @@ impl GameWorld {
             self.process
                 .resources
                 .get_mut::<MouseButton>()
-                .map(|mut mouse| {
-                    *mouse = MouseButton::from_event(ev);
-                });
+                .map(|mut mouse| *mouse = MouseButton::from_event(ev));
         }
     }
 

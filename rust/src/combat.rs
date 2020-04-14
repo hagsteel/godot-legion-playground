@@ -1,6 +1,6 @@
 use legion::prelude::*;
 
-use crate::units::{UnitPos, UnitRect};
+use crate::units::UnitRect;
 use crate::input::{MousePos, MouseButton};
 use crate::gameworld::Selected;
 
