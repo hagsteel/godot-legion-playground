@@ -1,9 +1,13 @@
+use euclid::Size2D;
 use gdnative::*;
 
 mod gameworld;
 mod units;
 mod spawner;
 mod input;
+mod combat;
+
+pub type Size2 = Size2D<f32, euclid::UnknownUnit>;
 
 fn init(handle: init::InitHandle) {
     handle.add_class::<gameworld::GameWorld>();
@@ -50,6 +54,7 @@ pub extern fn run_tests() -> sys::godot_variant {
 
     eprintln!("Running tests");
     status &= run_test!(units::tests::test_move_units);
+    status &= run_test!(combat::tests::test_target_unit);
 
     gdnative::Variant::from_bool(status).forget()
 }

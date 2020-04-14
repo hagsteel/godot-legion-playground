@@ -9,6 +9,7 @@ use std::sync::Mutex;
 
 use crate::input::{MouseButton, MousePos};
 use crate::units::{move_units, spawn_unit, select_unit, set_unit_destination};
+use crate::combat::{target_unit, attack_targets};
 
 // -----------------------------------------------------------------------------
 //     - World  -
@@ -42,6 +43,8 @@ impl Process {
         let schedule = Schedule::builder()
             .add_system(select_unit())
             .add_system(set_unit_destination())
+            .add_system(target_unit())
+            .add_system(attack_targets())
             .add_thread_local(spawn_unit())
             .build();
 
@@ -151,7 +154,8 @@ impl GameWorld {
             .resources
             .get_mut::<MousePos>()
             .map(|mut mouse| {
-                mouse.set_global(unsafe { owner.get_global_mouse_position() });
+                let pos = unsafe { owner.get_global_mouse_position() };
+                mouse.set_global(pos);
             });
 
         // Mouse button event
@@ -159,9 +163,7 @@ impl GameWorld {
             self.process
                 .resources
                 .get_mut::<MouseButton>()
-                .map(|mut mouse| {
-                    *mouse = MouseButton::from_event(ev);
-                });
+                .map(|mut mouse| *mouse = MouseButton::from_event(ev));
         }
     }
 

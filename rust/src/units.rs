@@ -1,4 +1,3 @@
-use euclid::Size2D;
 use gdextras::movement::Move2D;
 use gdnative::{KinematicBody2D, Rect2, Vector2};
 use legion::prelude::*;
@@ -6,10 +5,16 @@ use legion::prelude::*;
 use crate::gameworld::{Selected, WorldNode};
 use crate::input::{MouseButton, MousePos};
 use crate::spawner::{create_player_sprite, create_unit};
-
-pub type Size2 = Size2D<f32, euclid::UnknownUnit>;
+use crate::Size2;
+use crate::combat::Hitpoints;
 
 pub struct Unit(pub KinematicBody2D);
+
+impl Drop for Unit {
+    fn drop(&mut self) {
+        unsafe { self.0.queue_free() };
+    }
+}
 
 unsafe impl Send for Unit {}
 unsafe impl Sync for Unit {}
@@ -58,7 +63,8 @@ pub fn spawn_unit() -> Box<dyn Runnable> {
 
                 let unit_pos = UnitPos(unit.0.get_global_position());
                 let unit_rect = UnitRect::new(unit_pos.0, 7., 29.);
-                cmd.insert((), vec![(unit, unit_pos, unit_rect)]);
+                let hitpoints = Hitpoints(10);
+                cmd.insert((), vec![(unit, unit_pos, unit_rect, hitpoints)]);
             };
         })
 }
@@ -68,18 +74,21 @@ pub fn select_unit() -> Box<dyn Schedulable> {
         .write_resource::<MouseButton>()
         .read_resource::<MousePos>()
         .with_query(<Read<UnitRect>>::query())
-        .build(|cmd, world, (mouse_btn, mouse_pos), query| {
+        .with_query(<Read<UnitRect>>::query().filter(tag::<Selected>()))
+        .build(|cmd, world, (mouse_btn, mouse_pos), (deselected_query, selected_query)| {
+            // Only one selected unit at a time
+            if selected_query.iter(world).count() > 0 {
+                return;
+            }
+
             if !mouse_btn.button_pressed(1) {
                 return;
             }
 
-            eprintln!("{:?}", "try to select unit");
-
-            for (entity, rect) in query.iter_entities(world) {
+            for (entity, rect) in deselected_query.iter_entities(world) {
                 if rect.0.contains(mouse_pos.global().to_point()) {
                     cmd.add_tag(entity, Selected);
                     mouse_btn.consume();
-                    eprintln!("{:?}", "select unit");
                     return;
                 }
             }
@@ -90,18 +99,25 @@ pub fn set_unit_destination() -> Box<dyn Schedulable> {
     SystemBuilder::new("give units a destination")
         .write_resource::<MouseButton>()
         .read_resource::<MousePos>()
-        .with_query(<Read<UnitPos>>::query().filter(tag::<Selected>()))
-        .build(|cmd, world, (mouse_btn, mouse_pos), query| {
+        .with_query(<Read<UnitRect>>::query())
+        .with_query(<Read<UnitRect>>::query().filter(tag::<Selected>()))
+        .build(|cmd, world, (mouse_btn, mouse_pos), (all_query, query)| {
             if !mouse_btn.button_pressed(1) {
                 return;
             }
 
-            mouse_btn.consume();
+            for unit_rect in all_query.iter(world) {
+                if unit_rect.0.contains(mouse_pos.global().to_point()) {
+                    return
+                }
+            }
 
             for (entity, _) in query.iter_entities(world) {
                 cmd.add_component(entity, Destination(mouse_pos.global()));
                 cmd.remove_tag::<Selected>(entity);
             }
+
+            mouse_btn.consume();
         })
 }
 
