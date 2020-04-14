@@ -9,9 +9,12 @@ edition = "2018"
 [lib]
 crate-type = ["dylib"]
 
+[features]
+godot_test=[]
+
 [dependencies]
 gdnative = "0.8.0"
-gdextras = { path = "../../gdextras"} 
+gdextras = { path = "../../gdextras" } 
 legion = { git = "https://github.com/hagsteel/legion.git" }
 lazy_static = "1.4.0"
 euclid = "0.20.10"

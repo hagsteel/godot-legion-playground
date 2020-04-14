@@ -1,6 +1,6 @@
 use euclid::Size2D;
 use gdextras::movement::Move2D;
-use gdnative::{KinematicBody2D, Point2, Rect2, Vector2};
+use gdnative::{KinematicBody2D, Rect2, Vector2};
 use legion::prelude::*;
 
 use crate::gameworld::{Selected, WorldNode};
@@ -130,4 +130,32 @@ pub fn move_units() -> Box<dyn Runnable> {
                 }
             }
         })
+}
+
+#[cfg(feature = "godot_test")]
+pub mod tests {
+    use crate::assert_gd;
+    use super::*;
+
+    // Unit should be marked as selected
+    pub fn test_move_units() -> bool {
+        let mut world = Universe::new().create_world();
+        let mut resources = Resources::default();
+        resources.insert(MousePos::zero());
+        resources.insert(MouseButton::Mouse { pressed: true, button_index: 1 });
+
+        let entity = world.insert((), vec![(
+                UnitRect(Rect2::new(Vector2::zero().to_point(), Size2::new(10., 10.,))),
+        ),])[0];
+
+        assert_gd!(world.get_tag::<Selected>(entity).is_none());
+
+        let mut sched = Schedule::builder()
+            .add_system(select_unit())
+            .build();
+
+        sched.execute(&mut world, &mut resources);
+
+        assert_gd!(world.get_tag::<Selected>(entity).is_some())
+    }
 }
