@@ -10,7 +10,8 @@ I'm using this to prototype various things for my game.
 
 **rust** contains most of the code for this, using Legion ECS
 
-**test** contains the test project, this is only used to run the tests.
+**test** contains the test project, this is only used to run the tests and
+shouldn't need changing much.
 
 ## Testing
 
