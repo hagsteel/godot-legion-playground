@@ -154,7 +154,7 @@ pub mod tests {
     use super::*;
 
     // Unit should be marked as selected
-    pub fn test_move_units() -> bool {
+    pub fn test_select_units() -> bool {
         let mut world = Universe::new().create_world();
         let mut resources = Resources::default();
         resources.insert(MousePos::zero());

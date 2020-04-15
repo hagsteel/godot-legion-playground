@@ -57,7 +57,6 @@ pub fn attack_targets() -> Box<dyn Schedulable> {
                     None => { /* how can there be a unit without hitpoints? */ }
                     Some(mut hp) => {
                         hp.0 -= 1;
-                        eprintln!("hp: {}", hp.0);
 
                         if hp.0 <= 0 {
                             cmd.remove_component::<Target>(entity);
@@ -102,6 +101,34 @@ pub mod tests {
         sched.execute(&mut world, &mut resources);
 
         assert_gd!(world.get_component::<Target>(entity).is_some())
+    }
+
+    pub fn test_attack_target() -> bool {
+        let mut world = Universe::new().create_world();
+        let mut resources = Resources::default();
+        let target_pos = Vector2::new(100., 100.);
+        let mut mouse_pos = MousePos::zero();
+        mouse_pos.set_global(target_pos);
+        resources.insert(mouse_pos);
+        resources.insert(MouseButton::Mouse { pressed: true, button_index: 1 });
+
+        let target_entity = world.insert((), vec![(
+                Hitpoints(10),
+        ),])[0];
+
+        let entity = world.insert((), vec![(
+                Target(target_entity), Hitpoints(10),
+        ),])[0];
+
+        let mut sched = Schedule::builder()
+            .add_system(attack_targets())
+            .flush()
+            .build();
+
+        sched.execute(&mut world, &mut resources);
+
+        let hitpoints = world.get_component::<Hitpoints>(target_entity).unwrap();
+        assert_gd!(hitpoints.0 == 9)
     }
 }
 

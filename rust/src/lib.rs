@@ -21,7 +21,6 @@ godot_gdnative_terminate!();
 #[cfg(feature = "godot_test")]
 macro_rules! run_test {
     ($test:expr) => {
-
         if $test() {
             println!("{} [Ok]", stringify!($test));
             true
@@ -55,6 +54,7 @@ pub extern fn run_tests() -> sys::godot_variant {
     eprintln!("Running tests");
     status &= run_test!(units::tests::test_move_units);
     status &= run_test!(combat::tests::test_target_unit);
+    status &= run_test!(combat::tests::test_attack_target);
 
     gdnative::Variant::from_bool(status).forget()
 }
