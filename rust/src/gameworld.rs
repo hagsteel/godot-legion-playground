@@ -7,9 +7,9 @@ use lazy_static::lazy_static;
 use legion::prelude::*;
 use std::sync::Mutex;
 
+use crate::combat::{attack_targets, cooldown_units, despawn_bullets, spawn_bullets, target_unit};
 use crate::input::{MouseButton, MousePos};
-use crate::units::{move_units, spawn_unit, select_unit, set_unit_destination};
-use crate::combat::{target_unit, attack_targets};
+use crate::units::{move_units, select_unit, set_unit_destination, spawn_unit};
 
 // -----------------------------------------------------------------------------
 //     - World  -
@@ -45,7 +45,11 @@ impl Process {
             .add_system(set_unit_destination())
             .add_system(target_unit())
             .add_system(attack_targets())
+            .flush()
+            .add_system(cooldown_units())
             .add_thread_local(spawn_unit())
+            .add_thread_local(spawn_bullets())
+            .add_thread_local(despawn_bullets())
             .build();
 
         Self {
@@ -75,9 +79,7 @@ impl Physics {
         let mut resources = Resources::default();
         resources.insert(Delta(0.));
 
-        let schedule = Schedule::builder()
-            .add_thread_local(move_units())
-            .build();
+        let schedule = Schedule::builder().add_thread_local(move_units()).build();
 
         Self {
             resources,
