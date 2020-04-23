@@ -73,10 +73,13 @@ pub fn target_unit() -> Box<dyn Schedulable> {
 pub fn attack_targets() -> Box<dyn Schedulable> {
     SystemBuilder::new("attack targets")
         .write_component::<Hitpoints>()
-        .with_query(<Write<Target>>::query().filter(!component::<Cooldown>()))
+        .with_query(<Read<Target>>::query().filter(!component::<Cooldown>()))
         .build(|cmd, world, _, query| {
-            for (entity, target) in query.iter_entities_mut(world) {
-                let target_ent = target.0;
+            let targets = query.iter_entities(world).map(|(entity, target)| {
+                (entity, target.0)
+            }).collect::<Vec<_>>();
+
+            for (entity, target_ent) in targets {
                 match world.get_component_mut::<Hitpoints>(target_ent) {
                     None => { /* how can there be a unit without hitpoints? */ }
                     Some(mut hp) => {
